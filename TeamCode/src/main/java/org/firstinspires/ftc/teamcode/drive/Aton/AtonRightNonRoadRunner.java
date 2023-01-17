@@ -68,6 +68,7 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         claw.setPosition(1);
         sleep(1000);
 
+        goToDistance(12,1);
 
 
 
@@ -129,6 +130,48 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
         telemetry.update();
     }
+    private void goToDistance(double distance, double power) {
+        int targetTicks = (int) (distance * COUNTS_PER_INCH);
+        leftFrontDrive.setTargetPosition(targetTicks);
+        leftBackDrive.setTargetPosition(targetTicks);
+        rightFrontDrive.setTargetPosition(targetTicks);
+        rightBackDrive.setTargetPosition(targetTicks);
+        leftFrontDrive.setPower(power);
+        leftBackDrive.setPower(power);
+        rightFrontDrive.setPower(power);
+        rightBackDrive.setPower(power);
+
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        while (opModeIsActive() && leftFrontDrive.isBusy() && leftBackDrive.isBusy() && rightFrontDrive.isBusy() && rightBackDrive.isBusy() && leftFrontDrive.isBusy()) {
+            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            double heading = angles.firstAngle;
+
+            double leftPower = power;
+            double rightPower = power;
+
+            if (heading > 0) {
+                leftPower -= heading / 100.0;
+            } else {
+                rightPower += heading / 100.0;
+            }
+
+            leftFrontDrive.setPower(leftPower);
+            leftBackDrive.setPower(leftPower);
+            rightFrontDrive.setPower(rightPower);
+            rightBackDrive.setPower(rightPower);
+
+            telemetry.addData("Heading", heading);
+            telemetry.update();
+        }
+
+        leftFrontDrive.setPower(0);
+        leftBackDrive.setPower(0);
+        rightFrontDrive.setPower(0);
+        rightBackDrive.setPower(0);
+    }
+
 
     private void resetAngle()
     {

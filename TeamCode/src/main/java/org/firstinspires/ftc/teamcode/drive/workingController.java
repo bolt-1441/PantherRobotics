@@ -300,6 +300,7 @@ public class workingController extends LinearOpMode {
             telemetry.addData("power ",led.getPower());
             telemetry.addData("PoerFloats ", led.getPowerFloat());
             telemetry.addData("time ",runtime);
+            detectStop();
 
 //            if(gamepad2.right_stick_x < .1) {
 //                turret.setMode((DcMotor.RunMode.RUN_WITHOUT_ENCODER));
@@ -498,6 +499,18 @@ public class workingController extends LinearOpMode {
             }
         }
     }
+    private final double ACCELERATION_THRESHOLD = 0.01;
+    private double prevAcceleration;
+
+    private void detectStop() {
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
+        double acceleration = angles.thirdAngle;
+        if (Math.abs(acceleration - prevAcceleration) < ACCELERATION_THRESHOLD) {
+            telemetry.addLine("Robot Stopped");
+        }
+        prevAcceleration = acceleration;
+    }
+
 //    public void encoderDrive(double speed,
 //                             double leftInches)
 //    {
