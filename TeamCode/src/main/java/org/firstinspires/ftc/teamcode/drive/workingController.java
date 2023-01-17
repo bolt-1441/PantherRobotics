@@ -503,12 +503,13 @@ public class workingController extends LinearOpMode {
     private double prevAcceleration;
 
     private void detectStop() {
-        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
-        double acceleration = angles.thirdAngle;
-        if (Math.abs(acceleration - prevAcceleration) < ACCELERATION_THRESHOLD) {
-            telemetry.addLine("Robot Stopped");
+        Acceleration acceleration = imu.getLinearAcceleration();
+        double acceleration2 = (Math.abs(acceleration.xAccel + acceleration.yAccel + acceleration.zAccel)/3);
+        if (Math.abs(acceleration2 - prevAcceleration) < ACCELERATION_THRESHOLD) {
+            telemetry.addData("Robot time",acceleration2);
         }
-        prevAcceleration = acceleration;
+        prevAcceleration = acceleration2;
+        telemetry.addData("Robot acceleration:",acceleration2);
     }
 
 //    public void encoderDrive(double speed,
