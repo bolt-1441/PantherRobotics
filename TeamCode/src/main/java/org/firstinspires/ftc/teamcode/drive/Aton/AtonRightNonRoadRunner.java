@@ -10,6 +10,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -48,6 +49,7 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
 
     private DcMotor led = null;
     private boolean isFlashing = false;
+    private static double wheelCircumference = 4.0;
 
 
 
@@ -60,17 +62,130 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
 
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
         relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
-        NormalizedRGBA colors = colorSensor.getNormalizedColors();
 
 
         waitForStart();
         runtime.reset();
         claw.setPosition(1);
+
         sleep(1000);
+        moveDistance(12,.3);
+        moveDistanceR(12,.3);
+        sleep(5000);
 
 
 
+    }
 
+    public void moveDistance(double distance, double speed) {
+        // Calculate the number of rotations needed for each wheel
+        double rotations = distance / wheelCircumference;
+
+        // Set the target position for each wheel
+        leftFrontDrive.setTargetPosition((int)(rotations * leftFrontDrive.getMotorType().getTicksPerRev()));
+        leftBackDrive.setTargetPosition((int)(rotations * leftBackDrive.getMotorType().getTicksPerRev()));
+        rightFrontDrive.setTargetPosition((int)(rotations * rightFrontDrive.getMotorType().getTicksPerRev()));
+        rightBackDrive.setTargetPosition((int)(rotations * rightBackDrive.getMotorType().getTicksPerRev()));
+        telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
+
+        // Set the mode for each wheel to run to position
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        telemetry.addData("mode ", leftBackDrive.getMode());
+
+        // Set the power for each wheel
+        leftFrontDrive.setPower(speed);
+        leftBackDrive.setPower(speed);
+        rightFrontDrive.setPower(speed);
+        rightBackDrive.setPower(speed);
+        telemetry.addData("speed ", speed);
+
+        // Wait for the motors to finish moving
+        while (leftFrontDrive.isBusy() && leftBackDrive.isBusy() && rightFrontDrive.isBusy() && rightBackDrive.isBusy()) {
+            correction = checkDirection();
+            telemetry.addData("speed ", speed);
+            telemetry.addData("mode ", leftBackDrive.getMode());
+            telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
+            telemetry.addData("correction ", correction);
+            leftFrontDrive.setPower(speed - correction);
+            leftBackDrive.setPower(speed - correction);
+            rightFrontDrive.setPower(speed + correction);
+            rightBackDrive.setPower(speed + correction);
+            telemetry.update();
+        }
+
+        // Stop the motors
+        leftFrontDrive.setPower(0);
+        leftBackDrive.setPower(0);
+        rightFrontDrive.setPower(0);
+        rightBackDrive.setPower(0);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+    }
+    public void moveDistanceR(double distance, double speed) {
+        // Calculate the number of rotations needed for each wheel
+        double rotations = -distance / wheelCircumference;
+
+        // Set the target position for each wheel
+        leftFrontDrive.setTargetPosition((int)(rotations * leftFrontDrive.getMotorType().getTicksPerRev()));
+        leftBackDrive.setTargetPosition((int)(rotations * leftBackDrive.getMotorType().getTicksPerRev()));
+        rightFrontDrive.setTargetPosition((int)(rotations * rightFrontDrive.getMotorType().getTicksPerRev()));
+        rightBackDrive.setTargetPosition((int)(rotations * rightBackDrive.getMotorType().getTicksPerRev()));
+        telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
+
+        // Set the mode for each wheel to run to position
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        telemetry.addData("mode ", leftBackDrive.getMode());
+
+        // Set the power for each wheel
+        leftFrontDrive.setPower(speed);
+        leftBackDrive.setPower(speed);
+        rightFrontDrive.setPower(speed);
+        rightBackDrive.setPower(speed);
+        telemetry.addData("speed ", speed);
+
+        // Wait for the motors to finish moving
+        while (leftFrontDrive.isBusy() && leftBackDrive.isBusy() && rightFrontDrive.isBusy() && rightBackDrive.isBusy()) {
+            correction = checkDirection();
+            telemetry.addData("speed ", speed);
+            telemetry.addData("mode ", leftBackDrive.getMode());
+            telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
+            telemetry.addData("correction ", correction);
+            leftFrontDrive.setPower(speed + correction);
+            leftBackDrive.setPower(speed + correction);
+            rightFrontDrive.setPower(speed - correction);
+            rightBackDrive.setPower(speed - correction);
+            telemetry.update();
+        }
+
+        // Stop the motors
+        leftFrontDrive.setPower(0);
+        leftBackDrive.setPower(0);
+        rightFrontDrive.setPower(0);
+        rightBackDrive.setPower(0);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+    }
+    private void fix(){
+        correction = (checkDirection())*5;telemetry.addData("correction", correction);
+        leftFrontDrive.setPower(-correction);
+        leftBackDrive.setPower(-correction);
+        rightFrontDrive.setPower(correction);
+        rightBackDrive.setPower(correction);
+        telemetry.update();
     }
 
     private void initialized() {
@@ -89,8 +204,8 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
     private void setMotorDirection() {
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
     }
 
     private void initBot(){
@@ -99,7 +214,7 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "FrontRight");
         rightBackDrive = hardwareMap.get(DcMotor.class, "BackRight");
         turret = hardwareMap.get(DcMotor.class, "turret");
-        claw = hardwareMap.get(Servo.class,"claw");
+        claw = hardwareMap.get(Servo.class,"wrist");
         led = hardwareMap.get(DcMotor.class,"LED");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
 
@@ -224,42 +339,44 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
 
         // getAngle() returns + when rotating counter clockwise (left) and - when rotating
         // clockwise (right).
+        for (int i = 0; i < 3; i++) {
 
-        if (degrees < 0)
-        {   // turn right.
-            leftPower = power;
-            rightPower = power;
+
+            if (degrees < 0) {   // turn right.
+                leftPower = power;
+                rightPower = -power;
+            } else if (degrees > 0) {   // turn left.
+                leftPower = -power;
+                rightPower = power;
+            } else return;
+            telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
+            // set power to rotate.
+            leftBackDrive.setPower(leftPower);
+            leftFrontDrive.setPower(leftPower);
+            rightBackDrive.setPower(rightPower);
+            rightFrontDrive.setPower(rightPower);
+
+            // rotate until turn is completed.
+            if (degrees < 0) {
+                // On right turn we have to get off zero first.
+                while (opModeIsActive() && getAngle() == 0) {
+                    telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
+                    telemetry.addData("angle: ", getAngle());
+                    telemetry.update();
+                }
+
+                while (opModeIsActive() && getAngle() > degrees) {
+                    telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
+                    telemetry.addData("angle: ", getAngle());
+                    telemetry.update();
+                }
+            } else    // left turn.
+                while (opModeIsActive() && getAngle() < degrees) {
+                    telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
+                    telemetry.addData("angle: ", getAngle());
+                    telemetry.update();
+                }
         }
-        else if (degrees > 0)
-        {   // turn left.
-            leftPower = -power;
-            rightPower = -power;
-        }
-        else return;
-
-        // set power to rotate.
-        leftBackDrive.setPower(leftPower);
-        leftFrontDrive.setPower(leftPower);
-        rightBackDrive.setPower(rightPower);
-        rightFrontDrive.setPower(rightPower);
-
-        // rotate until turn is completed.
-        if (degrees < 0)
-        {
-            // On right turn we have to get off zero first.
-            while (opModeIsActive() && getAngle() == 0) {
-
-            }
-
-            while (opModeIsActive() && getAngle() > degrees) {
-
-            }
-        }
-        else    // left turn.
-            while (opModeIsActive() && getAngle() < degrees) {
-
-            }
-
         // turn the motors off.
         leftBackDrive.setPower(0);
         leftFrontDrive.setPower(0);
