@@ -32,11 +32,9 @@ package org.firstinspires.ftc.teamcode.drive;
 import android.view.View;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -81,16 +79,9 @@ public class workingController extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
-    private DcMotor turret = null;
-    //private DcMotor liftbottom = null;
-    private DcMotor lifttop = null;
+    private DcMotor leftFrontDrive,leftBackDrive,rightFrontDrive,rightBackDrive,turret;
+
     private Servo wrist = null;
-    private Servo claw = null;
-    private Servo push = null;
     BNO055IMU imu;
     Orientation             lastAngles = new Orientation();
     double                  globalAngle, power = .30, correction;
@@ -115,11 +106,7 @@ public class workingController extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "FrontRight");
         rightBackDrive = hardwareMap.get(DcMotor.class, "BackRight");
         turret = hardwareMap.get(DcMotor.class, "turret");
-        //liftbottom = hardwareMap.get(DcMotor.class, "liftbottom");
-        lifttop = hardwareMap.get(DcMotor.class,"lifttop");
         wrist = hardwareMap.get(Servo.class,"wrist");
-        //claw = hardwareMap.get(Servo.class,"claw");
-        push = hardwareMap.get(Servo.class, "push");
 
         led = hardwareMap.get(DcMotor.class,"LED");
 
@@ -168,25 +155,24 @@ public class workingController extends LinearOpMode {
 
 
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        lifttop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //liftbottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
         turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lifttop.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //liftbottom.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         turret.setTargetPosition(0);
         double dec = 1;
+
+
         leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         waitForStart();
         runtime.reset();
-        //encoderDrive(.1,5.9);
+
         // run until the end of the match (driver presses STOP)
 
         while (opModeIsActive()) {
@@ -242,12 +228,7 @@ public class workingController extends LinearOpMode {
             if(gamepad1.dpad_right){
                 dec = dec + .001;
             }
-            if(gamepad1.a){
-                push .setPosition(0);
-            }
-            if(gamepad1.b){
-                push .setPosition(1);
-            }
+
             if(gamepad1.x){
                 rotate(135,1);
             }
@@ -290,10 +271,7 @@ public class workingController extends LinearOpMode {
             if(gamepad2.left_trigger >.1){
                 turret.setTargetPosition(turret.getCurrentPosition() - (int)(gamepad2.left_trigger * 150));
             }
-            //liftbottom.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            lifttop.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            //liftbottom.setPower(gamepad2.left_stick_y*.1);
-            lifttop.setPower(gamepad2.left_stick_y*.1);
+
 
             setBrightnessFlash(.9);
 
@@ -301,14 +279,7 @@ public class workingController extends LinearOpMode {
             telemetry.addData("PoerFloats ", led.getPowerFloat());
             telemetry.addData("time ",runtime);
 
-//            if(gamepad2.right_stick_x < .1) {
-//                turret.setMode((DcMotor.RunMode.RUN_WITHOUT_ENCODER));
-//                while (gamepad2.right_stick_x < .1) {
-//                    turret.setPower(gamepad2.right_stick_x);
-//                }
-//                turret.setPower(0);
-//                turret.setMode((DcMotor.RunMode.RUN_USING_ENCODER));
-//            }
+//
             // This is test code:
             //
             // Uncomment the following code to test your motor directions.
@@ -319,12 +290,7 @@ public class workingController extends LinearOpMode {
             //      the setDirection() calls above.
             // Once the correct motors move in the correct direction re-comment this code.
 
-            /*
-            leftFrontPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            leftBackPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
+
 
             // Send calculated power to wheels
             leftFrontDrive.setPower(leftFrontPower*dec);
