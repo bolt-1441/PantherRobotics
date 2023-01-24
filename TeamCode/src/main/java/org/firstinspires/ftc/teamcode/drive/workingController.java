@@ -190,7 +190,7 @@ public class workingController extends LinearOpMode {
             double max;
             turret.setPower(.95);
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial = gamepad1.left_stick_x - correction;  // Note: pushing stick forward gives negative value
+            double axial = gamepad1.left_stick_x *.6 - correction;  // Note: pushing stick forward gives negative value; the multiplyer on left_stick_x is to reduce the turning for criss
             double lateral = -gamepad1.right_stick_x;
             double yaw = -gamepad1.right_stick_y;
 
