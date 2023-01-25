@@ -12,6 +12,6 @@ public class LimitSwitch {
     }
 
     public boolean isPressed() {
-        return !switchPin.getState();
+        return switchPin.getState();
     }
 }

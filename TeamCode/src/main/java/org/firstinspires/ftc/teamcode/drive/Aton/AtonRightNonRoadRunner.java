@@ -18,12 +18,19 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.apache.commons.math3.analysis.function.Log;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.teamcode.LogTeam;
+
+import java.util.ArrayList;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Autonomous(group = "drive")
 public class AtonRightNonRoadRunner extends LinearOpMode {
@@ -37,11 +44,13 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
     private Servo claw = null;
     NormalizedColorSensor colorSensor;
 
+    ArrayList<Double> nums = new ArrayList<>();
+
     BNO055IMU imu;
     Orientation             lastAngles = new Orientation();
     double                  globalAngle, power = .30, correction;
     View relativeLayout;
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
+    static final double     COUNTS_PER_MOTOR_REV    = 28 ;    // eg: TETRIX Motor Encoder
     static final double     DRIVE_GEAR_REDUCTION    = 12 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 4 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -50,7 +59,7 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
     private DcMotor led = null;
     private boolean isFlashing = false;
     private static double wheelCircumference = 4.0;
-
+    double distanceMoved = 0;
 
 
     @Override
@@ -58,11 +67,29 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         initBot();
         setMotorDirection();
         initialized();
-
+        Acceleration acceleration = imu.getLinearAcceleration();
+        AtomicBoolean monkey = new AtomicBoolean(true);
 
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
         relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
-
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Acceleration acceleration;
+                while (opModeIsActive()&&monkey.get()) {
+                    acceleration = imu.getLinearAcceleration();
+                    double acc = (acceleration.zAccel + acceleration.xAccel + acceleration.yAccel)/3;
+                    acc = acc * 100;
+                    acc = Math.round(acc);
+                    acc = acc/100;
+                    nums.add(acc*.1);
+                    telemetry.addData("Velocity (m/s)", acc * .1);
+                    telemetry.update();
+                    sleep(100);
+                }
+            }
+        });
+        t.start();
 
         waitForStart();
         runtime.reset();
@@ -70,9 +97,29 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
 
         sleep(1000);
         moveDistance(12,.3);
-        moveDistanceR(12,.3);
-        sleep(5000);
+        telemetry.addData("apparent moved distance" , getDistanceMoved());
 
+        //telemetry.update();
+        sleep(5000);
+        moveDistance(-11,.3);
+        telemetry.addData("apparent moved distance" , getDistanceMoved());
+        //telemetry.update();
+        sleep(5000);
+        monkey.set(false);
+        String str ="";
+        for (double e: nums) {
+            str = str + e + "\n";
+        }
+        telemetry.clearAll();
+        telemetry.addLine(str);
+        telemetry.update();
+        sleep(1000);
+        moveDistance(1,.7);
+        sleep(1000);
+        rotate(90,.3);
+        sleep(5000);
+        rotate(-90,.3);
+        sleep(1000000);
 
 
     }
@@ -82,10 +129,10 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         double rotations = distance / wheelCircumference;
 
         // Set the target position for each wheel
-        leftFrontDrive.setTargetPosition((int)(rotations * leftFrontDrive.getMotorType().getTicksPerRev()));
-        leftBackDrive.setTargetPosition((int)(rotations * leftBackDrive.getMotorType().getTicksPerRev()));
-        rightFrontDrive.setTargetPosition((int)(rotations * rightFrontDrive.getMotorType().getTicksPerRev()));
-        rightBackDrive.setTargetPosition((int)(rotations * rightBackDrive.getMotorType().getTicksPerRev()));
+        leftFrontDrive.setTargetPosition((int)(rotations * COUNTS_PER_MOTOR_REV));
+        leftBackDrive.setTargetPosition((int)(rotations * COUNTS_PER_MOTOR_REV));
+        rightFrontDrive.setTargetPosition((int)(rotations * COUNTS_PER_MOTOR_REV));
+        rightBackDrive.setTargetPosition((int)(rotations * COUNTS_PER_MOTOR_REV));
         telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
 
         // Set the mode for each wheel to run to position
@@ -109,62 +156,18 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
             telemetry.addData("mode ", leftBackDrive.getMode());
             telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
             telemetry.addData("correction ", correction);
-            leftFrontDrive.setPower(speed - correction);
-            leftBackDrive.setPower(speed - correction);
-            rightFrontDrive.setPower(speed + correction);
-            rightBackDrive.setPower(speed + correction);
-            telemetry.update();
-        }
-
-        // Stop the motors
-        leftFrontDrive.setPower(0);
-        leftBackDrive.setPower(0);
-        rightFrontDrive.setPower(0);
-        rightBackDrive.setPower(0);
-
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-    }
-    public void moveDistanceR(double distance, double speed) {
-        // Calculate the number of rotations needed for each wheel
-        double rotations = -distance / wheelCircumference;
-
-        // Set the target position for each wheel
-        leftFrontDrive.setTargetPosition((int)(rotations * leftFrontDrive.getMotorType().getTicksPerRev()));
-        leftBackDrive.setTargetPosition((int)(rotations * leftBackDrive.getMotorType().getTicksPerRev()));
-        rightFrontDrive.setTargetPosition((int)(rotations * rightFrontDrive.getMotorType().getTicksPerRev()));
-        rightBackDrive.setTargetPosition((int)(rotations * rightBackDrive.getMotorType().getTicksPerRev()));
-        telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
-
-        // Set the mode for each wheel to run to position
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        telemetry.addData("mode ", leftBackDrive.getMode());
-
-        // Set the power for each wheel
-        leftFrontDrive.setPower(speed);
-        leftBackDrive.setPower(speed);
-        rightFrontDrive.setPower(speed);
-        rightBackDrive.setPower(speed);
-        telemetry.addData("speed ", speed);
-
-        // Wait for the motors to finish moving
-        while (leftFrontDrive.isBusy() && leftBackDrive.isBusy() && rightFrontDrive.isBusy() && rightBackDrive.isBusy()) {
-            correction = checkDirection();
-            telemetry.addData("speed ", speed);
-            telemetry.addData("mode ", leftBackDrive.getMode());
-            telemetry.addData("ticks ", leftBackDrive.getTargetPosition());
-            telemetry.addData("correction ", correction);
-            leftFrontDrive.setPower(speed + correction);
-            leftBackDrive.setPower(speed + correction);
-            rightFrontDrive.setPower(speed - correction);
-            rightBackDrive.setPower(speed - correction);
-            telemetry.update();
+            if(distance<0){
+                leftFrontDrive.setPower(speed + correction);
+                leftBackDrive.setPower(speed + correction);
+                rightFrontDrive.setPower(speed - correction);
+                rightBackDrive.setPower(speed - correction);
+            }else {
+                leftFrontDrive.setPower(speed - correction);
+                leftBackDrive.setPower(speed - correction);
+                rightFrontDrive.setPower(speed + correction);
+                rightBackDrive.setPower(speed + correction);
+            }
+            //telemetry.update();
         }
 
         // Stop the motors
@@ -180,11 +183,24 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
 
     }
     private void fix(){
-        correction = (checkDirection())*5;telemetry.addData("correction", correction);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        while (getAngle() > 1){
+        correction = (checkDirection())*10;telemetry.addData("correction", correction);
         leftFrontDrive.setPower(-correction);
         leftBackDrive.setPower(-correction);
         rightFrontDrive.setPower(correction);
         rightBackDrive.setPower(correction);
+    }
+        while (getAngle() < -1 ){
+            correction = (checkDirection())*10;telemetry.addData("correction", correction);
+            leftFrontDrive.setPower(correction);
+            leftBackDrive.setPower(correction);
+            rightFrontDrive.setPower(-correction);
+            rightBackDrive.setPower(-correction);
+        }
         telemetry.update();
     }
 
@@ -293,11 +309,6 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         double speed = acceleration.xAccel;
         return speed;
     }
-    private double getAunglerSpeed(){
-        AngularVelocity angularVelocity = imu.getAngularVelocity();
-        double speed = -angularVelocity.zRotationRate;
-        return speed;
-    }
 
     /**
      * See if we are moving in a straight line and if not return a power correction value.
@@ -335,17 +346,17 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         double  leftPower, rightPower;
 
         // restart imu movement tracking.
-        resetAngle();
+        double startDes = getAngle();
 
         // getAngle() returns + when rotating counter clockwise (left) and - when rotating
         // clockwise (right).
         for (int i = 0; i < 3; i++) {
 
 
-            if (degrees < 0) {   // turn right.
+            if (degrees < startDes) {   // turn right.
                 leftPower = power;
                 rightPower = -power;
-            } else if (degrees > 0) {   // turn left.
+            } else if (degrees > startDes) {   // turn left.
                 leftPower = -power;
                 rightPower = power;
             } else return;
@@ -357,25 +368,39 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
             rightFrontDrive.setPower(rightPower);
 
             // rotate until turn is completed.
-            if (degrees < 0) {
+            if (degrees < startDes) {
                 // On right turn we have to get off zero first.
                 while (opModeIsActive() && getAngle() == 0) {
                     telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
                     telemetry.addData("angle: ", getAngle());
                     telemetry.update();
+
                 }
 
                 while (opModeIsActive() && getAngle() > degrees) {
                     telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
                     telemetry.addData("angle: ", getAngle());
                     telemetry.update();
+                    leftPower*=.99;
+                    rightPower*=.99;
+                    leftBackDrive.setPower(leftPower);
+                    leftFrontDrive.setPower(leftPower);
+                    rightBackDrive.setPower(rightPower);
+                    rightFrontDrive.setPower(rightPower);
                 }
             } else    // left turn.
                 while (opModeIsActive() && getAngle() < degrees) {
                     telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
                     telemetry.addData("angle: ", getAngle());
                     telemetry.update();
+                    leftPower*=.99;
+                    rightPower*=.99;
+                    leftBackDrive.setPower(leftPower);
+                    leftFrontDrive.setPower(leftPower);
+                    rightBackDrive.setPower(rightPower);
+                    rightFrontDrive.setPower(rightPower);
                 }
+
         }
         // turn the motors off.
         leftBackDrive.setPower(0);
@@ -503,6 +528,16 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
         return 4;
         //}
     }
+    private double getDistanceMoved() {
+
+        Acceleration acceleration = imu.getLinearAcceleration();
+        double avragAcc = (acceleration.zAccel + acceleration.xAccel + acceleration.yAccel)/3;
+        distanceMoved = distanceMoved + avragAcc*.1;
+            return distanceMoved;
+    }
+
+
+
 
 
 }

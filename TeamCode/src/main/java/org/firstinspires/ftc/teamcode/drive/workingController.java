@@ -44,6 +44,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 /**
  * This file contains an example of a Linear "OpMode".
@@ -95,6 +96,7 @@ public class workingController extends LinearOpMode {
     private DcMotor led = null;
     private boolean isFlashing = false;
     private long startTime;
+    double vol;
 
     @Override
     public void runOpMode() {
@@ -170,12 +172,16 @@ public class workingController extends LinearOpMode {
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        Acceleration acceleration = imu.getLinearAcceleration();
+        Velocity velocity = imu.getVelocity();
         waitForStart();
         runtime.reset();
 
         // run until the end of the match (driver presses STOP)
 
         while (opModeIsActive()) {
+            acceleration = imu.getLinearAcceleration();
+            velocity = imu.getVelocity();
             if(gamepad1.right_stick_x >= .2 || gamepad1.right_stick_x <= -.2)
                 correction = checkDirection();
             else {
@@ -297,12 +303,19 @@ public class workingController extends LinearOpMode {
             rightFrontDrive.setPower(rightFrontPower*dec);
             leftBackDrive.setPower(leftBackPower*dec);
             rightBackDrive.setPower(rightBackPower*dec);
-
+            double acc = (acceleration.zAccel + acceleration.xAccel + acceleration.yAccel)/3;
+            acc = acc * 100;
+            acc = Math.round(acc);
+            acc = acc/100;
+            vol = vol + acc * (1000* runtime.milliseconds());
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             telemetry.addData("Power:",dec);
+            telemetry.addData("Axx", acc);
+            telemetry.addData("Ves", (acc*(.1)));
+            telemetry.addData("vesE",vol);
             telemetry.update();
         }
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
