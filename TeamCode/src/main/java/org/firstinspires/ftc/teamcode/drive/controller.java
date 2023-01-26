@@ -88,7 +88,6 @@ public class controller extends LinearOpMode {
     private DcMotor turret = null;
     //private DcMotor liftbottom = null;
     private DcMotor lifttop = null;
-    private DcMotor extend = null;
     private Servo wrist = null;
     private Servo claw = null;
     BNO055IMU imu;
@@ -113,7 +112,6 @@ public class controller extends LinearOpMode {
         turret = hardwareMap.get(DcMotor.class, "turret");
         //liftbottom = hardwareMap.get(DcMotor.class, "liftbottom");
         lifttop = hardwareMap.get(DcMotor.class,"lifttop");
-        extend = hardwareMap.get(DcMotor.class,"extend");
         wrist = hardwareMap.get(Servo.class,"wrist");
         claw = hardwareMap.get(Servo.class,"claw");
 
@@ -173,7 +171,6 @@ public class controller extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         turret.setTargetPosition(0);
-        extend.setTargetPosition(0);
         double dec = 1;
         leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -280,7 +277,6 @@ public class controller extends LinearOpMode {
             lifttop.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             //liftbottom.setPower(gamepad2.left_stick_y*.1);
             lifttop.setPower(gamepad2.left_stick_y*.1);
-            extend.setPower(-gamepad2.right_stick_y);
 
 //            if(gamepad2.right_stick_x < .1) {
 //                turret.setMode((DcMotor.RunMode.RUN_WITHOUT_ENCODER));
@@ -317,8 +313,6 @@ public class controller extends LinearOpMode {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
-            telemetry.addData("Status", "Run Time: " + extend.getCurrentPosition());
-            telemetry.addData("Status", "Run Time: " + extend.getTargetPosition());
             telemetry.update();
         }
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
