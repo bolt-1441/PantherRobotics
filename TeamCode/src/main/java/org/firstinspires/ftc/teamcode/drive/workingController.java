@@ -173,7 +173,6 @@ public class workingController extends LinearOpMode {
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         Acceleration acceleration = imu.getLinearAcceleration();
-        Velocity velocity = imu.getVelocity();
         waitForStart();
         runtime.reset();
 
@@ -181,8 +180,7 @@ public class workingController extends LinearOpMode {
 
         while (opModeIsActive()) {
             acceleration = imu.getLinearAcceleration();
-            velocity = imu.getVelocity();
-            if(gamepad1.right_stick_x >= .2 || gamepad1.right_stick_x <= -.2)
+            if(gamepad1.left_stick_x <= -.2 || gamepad1.left_stick_x >= .2)
                 correction = checkDirection();
             else {
                 correction = 0;
@@ -194,7 +192,7 @@ public class workingController extends LinearOpMode {
             telemetry.addData("3 correction", correction);
 
             double max;
-            turret.setPower(.95);
+            turret.setPower(1);
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double axial = gamepad1.left_stick_x * .6 - correction;  // Note: pushing stick forward gives negative value; the multiplyer on left_stick_x is to reduce the turning for criss
             double lateral = -gamepad1.right_stick_x;

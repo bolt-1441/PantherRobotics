@@ -72,24 +72,6 @@ public class AtonRightNonRoadRunner extends LinearOpMode {
 
         int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
         relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Acceleration acceleration;
-                while (opModeIsActive()&&monkey.get()) {
-                    acceleration = imu.getLinearAcceleration();
-                    double acc = (acceleration.zAccel + acceleration.xAccel + acceleration.yAccel)/3;
-                    acc = acc * 100;
-                    acc = Math.round(acc);
-                    acc = acc/100;
-                    nums.add(acc*.1);
-                    telemetry.addData("Velocity (m/s)", acc * .1);
-                    telemetry.update();
-                    sleep(100);
-                }
-            }
-        });
-        t.start();
 
         waitForStart();
         runtime.reset();
