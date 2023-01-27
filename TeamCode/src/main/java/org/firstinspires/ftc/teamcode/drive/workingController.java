@@ -180,7 +180,7 @@ public class workingController extends LinearOpMode {
 
         while (opModeIsActive()) {
             acceleration = imu.getLinearAcceleration();
-            if(gamepad1.left_stick_x <= -.2 || gamepad1.left_stick_x >= .2)
+            if(gamepad1.right_stick_x <= -.2 || gamepad1.right_stick_x >= .2)
                 correction = checkDirection();
             else {
                 correction = 0;

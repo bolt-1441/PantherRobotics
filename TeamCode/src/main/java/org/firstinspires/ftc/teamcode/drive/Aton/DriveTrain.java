@@ -16,7 +16,7 @@ class DriveTrain {
     private final int wheelInches = 4;
     private final int tickRate = 28;
 
-    public DriveTrain(DcMotor leftFrontMotor, DcMotor leftBackMotor, DcMotor rightFrontMotor, DcMotor rightBackMotor) {
+    public DriveTrain(DcMotor leftFrontMotor, DcMotor leftBackMotor, DcMotor rightFrontMotor, DcMotor rightBackMotor,BNO055IMU imu) {
         this.leftFrontMotor = leftFrontMotor;
         this.leftBackMotor = leftBackMotor;
         this.rightFrontMotor = rightFrontMotor;
