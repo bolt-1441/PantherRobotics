@@ -21,7 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 public class atonTest extends LinearOpMode {
     DriveTrain driveTrain = new DriveTrain(hardwareMap.get(DcMotor.class, "FrontLeft"),hardwareMap.get(DcMotor.class, "BackLeft"),
             hardwareMap.get(DcMotor.class, "FrontRight"),hardwareMap.get(DcMotor.class, "BackRight"), hardwareMap.get(BNO055IMU.class,"imu"));
-    Arm arm = new Arm(hardwareMap.get(DcMotor.class, "turret"),hardwareMap.get(Servo.class,"wrist"),0,35);
+    Arm arm = new Arm(hardwareMap.get(DcMotor.class, "turret"),hardwareMap.get(Servo.class,"wrist"));
     LED led = new LED(hardwareMap.get(DcMotor.class,"LED"));
     LimitSwitch limitSwitch = new LimitSwitch(hardwareMap,"limitSwitch");
     @Override
