@@ -3,9 +3,8 @@ package org.firstinspires.ftc.teamcode.drive.Aton;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerImpl;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
@@ -15,7 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-class DriveTrain extends LinearOpMode {
+class DriveTrain {
     private DcMotor leftFrontMotor, leftBackMotor, rightFrontMotor, rightBackMotor;
 
     private final double speedAvrage = 0.5;
@@ -28,12 +27,12 @@ class DriveTrain extends LinearOpMode {
     private Orientation             lastAngles = new Orientation();
     double                  globalAngle, correction;
 
-    public DriveTrain(DcMotor leftFrontMotor, DcMotor leftBackMotor, DcMotor rightFrontMotor, DcMotor rightBackMotor,BNO055IMU imu) {
-        this.leftFrontMotor = leftFrontMotor;
-        this.leftBackMotor = leftBackMotor;
-        this.rightFrontMotor = rightFrontMotor;
-        this.rightBackMotor = rightBackMotor;
-        this.imu = imu;
+    public DriveTrain(String leftFrontMotor, String leftBackMotor, String rightFrontMotor, String rightBackMotor, HardwareMap hardwareMap) {
+        this.leftFrontMotor = hardwareMap.get(DcMotor.class, leftFrontMotor);
+        this.leftBackMotor = hardwareMap.get(DcMotor.class, leftBackMotor);
+        this.rightFrontMotor = hardwareMap.get(DcMotor.class,rightFrontMotor);
+        this.rightBackMotor = hardwareMap.get(DcMotor.class, rightBackMotor);
+        this.imu = hardwareMap.get(BNO055IMU.class, "imu");
     }
 
     public double rotationVeloity() {
@@ -287,14 +286,14 @@ class DriveTrain extends LinearOpMode {
             // rotate until turn is completed.
             if (degrees < startDes) {
                 // On right turn we have to get off zero first.
-                while (opModeIsActive() && getAngle() == 0) {
+                while ( getAngle() == 0) {
                     telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
                     telemetry.addData("angle: ", getAngle());
                     telemetry.update();
 
                 }
 
-                while (opModeIsActive() && getAngle() > degrees) {
+                while (getAngle() > degrees) {
                     telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
                     telemetry.addData("angle: ", getAngle());
                     telemetry.update();
@@ -306,7 +305,7 @@ class DriveTrain extends LinearOpMode {
                     rightFrontMotor.setPower(rightPower);
                 }
             } else    // left turn.
-                while (opModeIsActive() && getAngle() < degrees) {
+                while (getAngle() < degrees) {
                     telemetry.addData("left power: ", leftPower);telemetry.addData("right power: ", rightPower);
                     telemetry.addData("angle: ", getAngle());
                     telemetry.update();
@@ -331,9 +330,5 @@ class DriveTrain extends LinearOpMode {
     }
 
 
-    @Override
-    public void runOpMode() throws InterruptedException {
-
-    }
 }
 
