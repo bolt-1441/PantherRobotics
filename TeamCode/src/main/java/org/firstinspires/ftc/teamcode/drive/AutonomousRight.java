@@ -100,7 +100,7 @@ public class AutonomousRight extends LinearOpMode {
         wrist.setPosition(.5);
         sleep(100);
         drive.followTrajectory(traj4);
-        turret.setPower(.5);
+        turret.setPower(1);
         turret.setTargetPosition(5);
         samePostitionarm();
         sleep(1000);
